@@ -1,0 +1,32 @@
+{
+  "name": "wp-google-datastudio",
+  "version": "0.0.1",
+  "description": "Displays Data Studio dashboard in WordPress administration panel.",
+  "scripts": {
+    "build": "uglifyjs ./public/js/notices.js -c -o ./public/js/notices.min.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/innocode-digital/wp-google-datastudio.git"
+  },
+  "author": {
+    "name": "Innocode",
+    "email": "post@innocode.no",
+    "homepage": "https://innocode.com/"
+  },
+  "contributors": [
+    {
+      "name": "Viktor Kuliebiakin",
+      "email": "kuliebiakin@gmail.com"
+    }
+  ],
+  "license": "GPL-2.0-or-later",
+  "bugs": {
+    "url": "https://github.com/innocode-digital/wp-google-datastudio/issues"
+  },
+  "homepage": "https://github.com/innocode-digital/wp-google-datastudio#readme",
+  "devDependencies": {
+    "uglify-js": "^3.6.8"
+  }
+}
