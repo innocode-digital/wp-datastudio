@@ -223,7 +223,13 @@ final class Plugin
     public function enqueue_scripts()
     {
         if (
-        	get_current_screen()->id == 'settings_page_' . static::OPTION_GROUP . '_options' ||
+        	in_array(
+		        get_current_screen()->id,
+		        [
+			        'settings_page_' . static::OPTION_GROUP . '_options',
+			        'dashboard_page_' . static::OPTION_GROUP . '_dashboard'
+		        ]
+	        ) ||
 	        ! current_user_can( 'read_' . static::OPTION_GROUP )
         ) {
             return;
