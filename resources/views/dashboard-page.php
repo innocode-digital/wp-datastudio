@@ -16,7 +16,7 @@
         </div>
     <?php endif ?>
 <?php endif ?>
-<?php if ( $google_datastudio->current_user_can_see_notice() ) : ?>
+<?php if ( $google_datastudio->current_user_can_read_notice() ) : ?>
     <script>
         jQuery(function ($) {
             $.post('<?= admin_url( 'admin-ajax.php' ) ?>', {

@@ -34,6 +34,15 @@ final class Plugin
 
     public function run()
     {
+        register_activation_hook(
+            INNOCODE_GOOGLE_DATASTUDIO_FILE,
+            [ $this, 'install' ]
+        );
+        register_deactivation_hook(
+            INNOCODE_GOOGLE_DATASTUDIO_FILE,
+            [ $this, 'uninstall' ]
+        );
+
         $admin = $this->get_admin();
 
         add_action( 'admin_init', [ $admin, 'register_settings' ] );
@@ -43,6 +52,16 @@ final class Plugin
         add_action( 'admin_notices', [ $admin, 'add_notices' ] );
         add_action( 'in_admin_header', [ $admin, 'remove_dashboard_notices' ], 999 );
 
+        add_action(
+            'add_option_' . static::OPTION_GROUP . '_roles',
+            [ $this, 'update_roles' ],
+            10, 2
+        );
+        add_action(
+            'update_option_' . static::OPTION_GROUP . '_roles',
+            [ $this, 'update_roles' ],
+            10, 2
+        );
         add_action( 'admin_notices', [ $this, 'add_user_notices' ] );
         add_action(
             'wp_ajax_' . static::OPTION_GROUP . '_dismiss_notice',
@@ -120,12 +139,57 @@ final class Plugin
         return get_option( $key );
     }
 
+    public function install()
+    {
+        $capability = 'read_' . static::OPTION_GROUP;
+
+        foreach ( $this->option( 'roles' ) as $name ) {
+			$role = get_role( $name );
+
+			if ( $role && ! $role->has_cap( $capability ) ) {
+				$role->add_cap( $capability );
+			}
+        }
+    }
+
+    public function uninstall()
+    {
+        $capability = 'read_' . static::OPTION_GROUP;
+
+        foreach ( wp_roles()->role_objects as $role ) {
+            if ( $role->has_cap( $capability ) ) {
+                $role->remove_cap( $capability );
+            }
+        }
+    }
+
+    /**
+     * @param mixed $old_value
+     * @param array $value
+     */
+    public function update_roles( $old_value, array $value )
+    {
+        $capability = 'read_' . static::OPTION_GROUP;
+
+        foreach ( wp_roles()->role_objects as $role ) {
+            if ( $role->name == 'administrator' ) {
+                continue;
+            }
+
+            if ( in_array( $role->name, $value ) && ! $role->has_cap( $capability ) ) {
+                $role->add_cap( $capability );
+            } elseif ( $role->has_cap( $capability ) ) {
+                $role->remove_cap( $capability );
+            }
+        }
+    }
+
     public function add_user_notices()
     {
         if (
-            get_current_screen()->id == 'settings_page_' . Plugin::OPTION_GROUP . '_options' ||
-            ! $this->current_user_can_see_dashboard() ||
-            ! $this->current_user_can_see_notice()
+            get_current_screen()->id == 'settings_page_' . static::OPTION_GROUP . '_options' ||
+            ! current_user_can( 'read_' . static::OPTION_GROUP ) ||
+            ! $this->current_user_can_read_notice()
         ) {
             return;
         }
@@ -136,7 +200,7 @@ final class Plugin
             sprintf(
                 __( '<a href="https://datastudio.google.com/" target="_blank" rel="noopener noreferrer">Google Data Studio</a> dashboard is available <a href="%s">here</a>!' ),
                 admin_url(
-                    'index.php?page=' . Plugin::OPTION_GROUP . '_dashboard'
+                    'index.php?page=' . static::OPTION_GROUP . '_dashboard'
                 )
             )
         );
@@ -159,62 +223,104 @@ final class Plugin
     public function enqueue_scripts()
     {
         if (
-            get_current_screen()->id == 'settings_page_' . Plugin::OPTION_GROUP . '_options' ||
-            ! $this->current_user_can_see_dashboard() ||
-            ! $this->current_user_can_see_notice()
+        	get_current_screen()->id == 'settings_page_' . static::OPTION_GROUP . '_options' ||
+	        ! current_user_can( 'read_' . static::OPTION_GROUP )
         ) {
             return;
         }
 
         $suffix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
+        $settings = [
+	        'ajaxURL'         => admin_url( 'admin-ajax.php' ),
+	        'dismissAction'   => static::OPTION_GROUP . '_dismiss_notice',
+	        'dismissNonce'    => wp_create_nonce(
+		        static::OPTION_GROUP . '_dismiss_notice'
+	        ),
+	        'dismissCSSClass' => 'notice-' . static::OPTION_GROUP,
+        ];
 
-        wp_enqueue_script(
-            'innocode-google-datastudio-notices',
-            plugins_url(
-                "public/js/notices$suffix.js",
-                INNOCODE_GOOGLE_DATASTUDIO_FILE
-            ),
-            [ 'jquery' ],
-            INNOCODE_GOOGLE_DATASTUDIO_VERSION,
-            true
-        );
-        wp_localize_script(
-            'innocode-google-datastudio-notices',
-            'innocodeGoogleDataStudioNotices',
-            [
-                'ajaxURL'         => admin_url( 'admin-ajax.php' ),
-                'dismissAction'   => static::OPTION_GROUP . '_dismiss_notice',
-                'dismissNonce'    => wp_create_nonce(
-                    static::OPTION_GROUP . '_dismiss_notice'
-                ),
-                'dismissCSSClass' => 'notice-' . static::OPTION_GROUP,
-            ]
-        );
+        if ( $this->current_user_can_read_notice() ) {
+	        wp_enqueue_script(
+		        'innocode-google-datastudio-notices',
+		        plugins_url(
+			        "public/js/notices$suffix.js",
+			        INNOCODE_GOOGLE_DATASTUDIO_FILE
+		        ),
+		        [ 'jquery' ],
+		        INNOCODE_GOOGLE_DATASTUDIO_VERSION,
+		        true
+	        );
+	        wp_localize_script(
+		        'innocode-google-datastudio-notices',
+		        'innocodeGoogleDataStudioNotices',
+		        $settings
+	        );
+        }
+
+        if ( $this->current_user_can_read_pointer() ) {
+            wp_enqueue_style( 'wp-pointer' );
+	        wp_enqueue_script( 'wp-pointer' );
+	        wp_enqueue_script(
+		        'innocode-google-datastudio-pointers',
+		        plugins_url(
+			        "public/js/pointers$suffix.js",
+			        INNOCODE_GOOGLE_DATASTUDIO_FILE
+		        ),
+		        [ 'jquery', 'wp-pointer' ],
+		        INNOCODE_GOOGLE_DATASTUDIO_VERSION,
+		        true
+	        );
+	        wp_localize_script(
+		        'innocode-google-datastudio-pointers',
+		        'innocodeGoogleDataStudioPointers',
+		        array_merge( $settings, [
+			        'pointerSelector' => sprintf(
+				        '.wp-menu-open [href="%s"]',
+				        esc_attr( 'index.php?page=' . static::OPTION_GROUP . '_dashboard'    )
+			        ),
+			        'pointerOptions'  => [
+				        'content' => sprintf( '<h3>%s</h3><p>%s</p>',
+					        esc_html__(
+						        'Google Data Studio Dashboard',
+						        'innocode-google-datastudio'
+					        ),
+					        esc_html__(
+						        'Your digital marketing reporting service. This is where your subscribed reporting service with Google Data Studio could be shown.',
+						        'innocode-google-datastudio'
+					        )
+				        ),
+			        ],
+		        ] )
+	        );
+        }
     }
 
     /**
+     * Checks if current user should see notice of plugin current version.
+     * Patch versions are skipped.
+     *
      * @return bool
      */
-    public function current_user_can_see_dashboard()
-    {
-        return (bool) count(
-            array_intersect(
-                $this->option( 'roles' ),
-                wp_get_current_user()->roles
-            )
-        );
-    }
-
-    /**
-     * @return bool
-     */
-    public function current_user_can_see_notice()
+    public function current_user_can_read_notice()
     {
         return version_compare(
-            INNOCODE_GOOGLE_DATASTUDIO_VERSION,
+	        preg_replace(
+	        	'/\d+$/', '0', INNOCODE_GOOGLE_DATASTUDIO_VERSION
+	        ),
             $this->get_user_dismissed_notice_version( get_current_user_id() ),
             '>'
         );
+    }
+
+	/**
+	 * Checks if current user should see pointer with plugin info.
+	 * Unlike notice, pointer should be shown only one time.
+	 *
+	 * @return bool
+	 */
+    public function current_user_can_read_pointer()
+    {
+    	return ! $this->get_user_dismissed_notice_version( get_current_user_id() );
     }
 
     /**

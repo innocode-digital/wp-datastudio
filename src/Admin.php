@@ -18,7 +18,9 @@ final class Admin
         'fallback_message' => [
             'sanitize_callback' => 'wp_kses_post',
         ],
-        'roles' => [],
+        'roles'            => [
+        	'type' => 'array',
+        ],
     ];
     /**
      * @var array
@@ -55,8 +57,11 @@ final class Admin
     private function init_page( callable $view, $name )
     {
         $this->pages[ $name ] = [
-            'menu_slug' => Plugin::OPTION_GROUP . "_$name",
-            'callback'  => function () use ( $view, $name ) {
+            'menu_slug'  => Plugin::OPTION_GROUP . "_$name",
+            'capability' => $name == 'options'
+                ? 'manage_options'
+                : 'read_' . Plugin::OPTION_GROUP,
+            'callback'   => function () use ( $view, $name ) {
                 $view( "$name-page" );
             },
         ];
@@ -85,7 +90,10 @@ final class Admin
                     esc_attr( Plugin::OPTION_GROUP . '-url' ),
                     esc_attr( Plugin::OPTION_GROUP . '_url' ),
                     esc_attr( $option( 'url' ) ),
-                    __( 'Insert copied URL from <a href="https://datastudio.google.com/" target="_blank" rel="noopener noreferrer">Data Studio</a>.', 'innocode-google-datastudio' )
+                    __(
+                    	'Insert copied URL from <a href="https://datastudio.google.com/" target="_blank" rel="noopener noreferrer">Data Studio</a>.',
+	                    'innocode-google-datastudio'
+                    )
                 );
             },
             'page'     => Plugin::OPTION_GROUP . '_options',
@@ -153,9 +161,9 @@ final class Admin
                                 esc_html( $role_names[ $role ] ),
                                 $role == 'administrator'
                                     ? sprintf(
-                                    '<em>(%s)</em>',
-                                    __( 'always active', 'innocode-google-datastudio' )
-                                )
+	                                    '<em>(%s)</em>',
+	                                    __( 'always active', 'innocode-google-datastudio' )
+	                                )
                                     : ''
                             );
                         },
@@ -222,7 +230,7 @@ final class Admin
             $function(
                 __( 'Google Data Studio', 'innocode-google-datastudio' ),
                 __( 'Google Data Studio', 'innocode-google-datastudio' ),
-                'manage_options',
+                $page['capability'],
                 $page['menu_slug'],
                 $page['callback']
             );
