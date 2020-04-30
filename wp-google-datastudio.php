@@ -3,7 +3,7 @@
  * Plugin Name: Google Data Studio
  * Description: Displays Data Studio dashboard in WordPress administration panel.
  * Plugin URI: https://github.com/innocode-digital/wp-google-datastudio
- * Version: 1.0.0
+ * Version: 1.0.1
  * Author: Innocode
  * Author URI: https://innocode.com
  * Tested up to: 5.4
@@ -13,7 +13,7 @@
 
 use Innocode\GoogleDataStudio;
 
-define( 'INNOCODE_GOOGLE_DATASTUDIO_VERSION', '1.0.0' );
+define( 'INNOCODE_GOOGLE_DATASTUDIO_VERSION', '1.0.1' );
 define( 'INNOCODE_GOOGLE_DATASTUDIO_FILE', __FILE__ );
 
 if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {

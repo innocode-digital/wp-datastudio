@@ -164,11 +164,15 @@ final class Plugin
     }
 
     /**
-     * @param mixed $old_value
-     * @param array $value
+     * @param mixed      $old_value
+     * @param array|null $value
      */
-    public function update_roles( $old_value, array $value )
+    public function update_roles( $old_value, $value )
     {
+    	if ( ! $value ) {
+    		return;
+	    }
+
         $capability = 'read_' . static::OPTION_GROUP;
 
         foreach ( wp_roles()->role_objects as $role ) {

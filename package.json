@@ -1,6 +1,6 @@
 {
   "name": "wp-google-datastudio",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Displays Data Studio dashboard in WordPress administration panel.",
   "scripts": {
     "build": "uglifyjs ./public/js/notices.js -c -o ./public/js/notices.min.js && uglifyjs ./public/js/pointers.js -c -o ./public/js/pointers.min.js",
