@@ -19,7 +19,8 @@ final class Admin
             'sanitize_callback' => 'wp_kses_post',
         ],
         'roles'            => [
-        	'type' => 'array',
+        	'type'    => 'array',
+	        'default' => [],
         ],
     ];
     /**

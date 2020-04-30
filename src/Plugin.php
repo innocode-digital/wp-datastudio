@@ -128,11 +128,17 @@ final class Plugin
         $key = static::OPTION_GROUP . "_$name";
 
         if ( $name == 'roles' ) {
+        	$roles = get_option( $key, [] );
+
+        	if ( ! $roles ) {
+		        $roles = [];
+	        }
+
             return array_merge(
                 isset( wp_roles()->roles['administrator'] )
                     ? [ 'administrator' ]
                     : [],
-                get_option( $key, [] )
+	            $roles
             );
         }
 
