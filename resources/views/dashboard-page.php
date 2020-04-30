@@ -4,7 +4,7 @@
 <?php if ( $url ) : ?>
     <iframe
         src="<?= esc_url( $url ) ?>"
-        style="border: 0; width: 100%; height: calc(100vh - 100px);"
+        style="position: absolute; border: 0; width: 100%; height: calc(100% - 100px); min-height: calc(100vh - 100px);"
         allowfullscreen
     ></iframe>
 <?php else : ?>
